@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Room Finder</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f6f8;
+      color: #333;
+    }
+    header {
+      background: #4a63f0;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      flex-wrap: wrap;
+    }
+    .logo {
+      font-size: 22px;
+      font-weight: bold;
+    }
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .search-bar {
+      width: 100%;
+      text-align: center;
+      margin-top: 10px;
+    }
+    .search-bar input {
+      padding: 8px 12px;
+      width: 50%;
+      max-width: 400px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: none;
+    }
+    .hero {
+      background: linear-gradient(to right, #4a63f0, #7687ff);
+      padding: 50px 20px;
+      text-align: center;
+      color: white;
+    }
+    .hero h1 {
+      margin: 0;
+      font-size: 36px;
+    }
+    .listings-box {
+      max-width: 1000px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+    .room-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    .room-card img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .room-card h3 {
+      margin: 0 0 10px;
+    }
+    .room-card p {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">Room Finder</div>
+    <nav>
+      <a href="roomfinder.html">Home</a>
+      <a href="post-room.html">Post a Room</a>
+      <a href="login.html">Login</a>
+      <a href="profile.html">Profile</a>
+    </nav>
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search by location or address...">
+    </div>
+  </header>
+
+  <section class="hero">
+    <h1>Find Your Perfect Room</h1>
+  </section>
+
+  <section class="listings-box">
+    <div id="roomList">Loading rooms...</div>
+  </section>
+
+  <script>
+  const roomList = document.getElementById("roomList");
+  const allRooms = JSON.parse(localStorage.getItem("roomListings")) || [];
+  const availableRooms = allRooms.filter(room => room.available === true);
+
+  if (availableRooms.length === 0) {
+    roomList.textContent = "No rooms available.";
+  } else {
+    roomList.innerHTML = "";
+    availableRooms.forEach(room => {
+      const roomCard = document.createElement("div");
+      roomCard.className = "room-card";
+      roomCard.innerHTML = `
+        <img src="${room.imageUrl || 'default-room.jpg'}" alt="Room Image">
+        <h3>${room.title}</h3>
+        <p><strong>Location:</strong> ${room.location}</p>
+        <p><strong>Rent:</strong> ₹${room.rent}</p>
+        <p><strong>Status:</strong> ${room.available ? 'Available' : 'Booked'}</p>
+      `;
+      roomList.appendChild(roomCard);
+    });
+  }
+</script>
+<script>
+  const currentUser = localStorage.getItem("currentUser"); // Logged-in username or ID
+  const roomList = document.getElementById("roomList");
+  const allRooms = JSON.parse(localStorage.getItem("roomListings")) || [];
+
+  if (allRooms.length === 0) {
+    roomList.textContent = "No rooms available.";
+  } else {
+    roomList.innerHTML = "";
+    allRooms.forEach((room, index) => {
+      const roomCard = document.createElement("div");
+      roomCard.className = "room-card";
+      roomCard.innerHTML = `
+        <img src="${room.imageUrl || 'default-room.jpg'}" alt="Room Image">
+        <h3>${room.title}</h3>
+        <p><strong>Location:</strong> ${room.location}</p>
+        <p><strong>Rent:</strong> ₹${room.rent}</p>
+        <p><strong>Status:</strong> ${room.available ? 'Available' : 'Booked'}</p>
+      `;
+
+      const actionBtn = document.createElement("button");
+      actionBtn.style.marginTop = "10px";
+      actionBtn.style.padding = "8px 16px";
+
+      if (room.available) {
+        actionBtn.textContent = "Book Room";
+        actionBtn.onclick = () => {
+          room.available = false;
+          room.bookedBy = currentUser;
+          localStorage.setItem("roomListings", JSON.stringify(allRooms));
+          location.reload();
+        };
+      } else if (room.bookedBy === currentUser) {
+        actionBtn.textContent = "Cancel Booking";
+        actionBtn.onclick = () => {
+          room.available = true;
+          delete room.bookedBy;
+          localStorage.setItem("roomListings", JSON.stringify(allRooms));
+          location.reload();
+        };
+      }
+
+      if (room.available || room.bookedBy === currentUser) {
+        roomCard.appendChild(actionBtn);
+      }
+
+      roomList.appendChild(roomCard);
+    });
+  }
+</script>
+
+
+  <script src="scripts/roomfinder.js"></script>
+  <script>
+  const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+  const roomListDiv = document.getElementById("roomList");
+  const rooms = JSON.parse(localStorage.getItem("roomListings")) || [];
+
+  function saveRooms() {
+    localStorage.setItem("roomListings", JSON.stringify(rooms));
+  }
+
+  function renderRooms() {
+    roomListDiv.innerHTML = "";
+
+    const search = document.getElementById("searchInput").value.toLowerCase();
+
+    const filteredRooms = rooms.filter(room =>
+      room.location.toLowerCase().includes(search) ||
+      room.address.toLowerCase().includes(search)
+    );
+
+    if (filteredRooms.length === 0) {
+      roomListDiv.innerHTML = "<p>No rooms found for your search.</p>";
+      return;
+    }
+
+    filteredRooms.forEach((room, index) => {
+      const card = document.createElement("div");
+      card.className = "room-card";
+      card.innerHTML = `
+        <img src="${room.image}" alt="Room Image">
+        <h3>${room.type} in ${room.location}</h3>
+        <p><strong>Address:</strong> ${room.address}</p>
+        <p><strong>Rent:</strong> ₹${room.rent}</p>
+        <p><strong>Status:</strong> ${room.available ? "Available" : "Booked"}</p>
+      `;
+
+      const btn = document.createElement("button");
+
+      if (!room.available && currentUser && room.bookedBy === currentUser.username) {
+        btn.textContent = "Cancel Booking";
+        btn.onclick = () => {
+          if (confirm("Cancel your booking?")) {
+            room.available = true;
+            room.bookedBy = null;
+            saveRooms();
+            renderRooms();
+          }
+        };
+      } else if (room.available && currentUser && room.postedBy !== currentUser.username) {
+        btn.textContent = "Book";
+        btn.onclick = () => {
+          if (confirm("Do you want to book this room?")) {
+            room.available = false;
+            room.bookedBy = currentUser.username;
+            saveRooms();
+            renderRooms();
+          }
+        };
+      }
+
+      if (btn.textContent) {
+        btn.style.marginTop = "10px";
+        card.appendChild(btn);
+      }
+
+      roomListDiv.appendChild(card);
+    });
+  }
+
+  document.getElementById("searchInput").addEventListener("input", renderRooms);
+  renderRooms();
+</script>
+
+</body>
+</html>
